@@ -2,7 +2,9 @@ package com.example.devmatch.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -14,10 +16,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    @NotBlank(message = "Username is mandatory")
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Email(message = "Email should be valid")
     @Column(unique = true, nullable = false)
+    @NotBlank(message = "Email is mandatory")
     private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -25,6 +31,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @NotNull(message = "Role is mandatory")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
