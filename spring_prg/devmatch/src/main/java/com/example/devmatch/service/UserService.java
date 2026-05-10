@@ -15,7 +15,6 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        // Qui in futuro aggiungeremo la logica per criptare la password
         return userRepository.save(user);
     }
 
