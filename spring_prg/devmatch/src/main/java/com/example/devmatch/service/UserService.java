@@ -1,5 +1,7 @@
 package com.example.devmatch.service;
 
+import com.example.devmatch.dto.RegisterUserRequest;
+import com.example.devmatch.dto.UserResponse;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -14,11 +16,31 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public User createUser(User user) {
-        return userRepository.save(user);
+    public UserResponse createUser(RegisterUserRequest request) {
+        User user = new User();
+
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setPassword(request.password());
+        user.setRole(request.role());
+        User savedUser = userRepository.save(user);
+        return mapToUserResponse(savedUser);
+
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    private UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole()
+        );
+    }
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToUserResponse)
+                .toList();
     }
 }

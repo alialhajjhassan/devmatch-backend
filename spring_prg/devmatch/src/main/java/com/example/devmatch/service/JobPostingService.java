@@ -1,6 +1,9 @@
 package com.example.devmatch.service;
 
 
+import com.example.devmatch.dto.CreateJobRequest;
+import com.example.devmatch.dto.JobResponse;
+import com.example.devmatch.dto.UpdateJobRequest;
 import com.example.devmatch.model.JobPosting;
 import com.example.devmatch.repository.JobPostingRepository;
 import org.springframework.stereotype.Service;
@@ -15,26 +18,50 @@ public class JobPostingService {
         this.jobPostingRepository = jobPostingRepository;
     }
 
-    public JobPosting createJob(JobPosting jobPosting) {
-        return jobPostingRepository.save(jobPosting);
+    public JobResponse createJob(CreateJobRequest request) {
+        JobPosting jobPosting = new JobPosting();
+
+        jobPosting.setTitle(request.title());
+        jobPosting.setDescription(request.description());
+        jobPosting.setBudget(request.budget());
+
+        JobPosting savedJob = jobPostingRepository.save(jobPosting);
+        return mapToJobResponse(savedJob);
     }
 
-    public List<JobPosting> getAllJobs() {
-        return jobPostingRepository.findAll();
+    private JobResponse mapToJobResponse(JobPosting jobPosting) {
+        return new JobResponse(
+                jobPosting.getId(),
+                jobPosting.getTitle(),
+                jobPosting.getDescription(),
+                jobPosting.getBudget(),
+                jobPosting.getStatus(),
+                jobPosting.getCreatedAt()
+        );
     }
 
-    public Optional<JobPosting> getJobById(Long id) {
-        return jobPostingRepository.findById(id);
+    public List<JobResponse> getAllJobs() {
+        return jobPostingRepository.findAll()
+                .stream()
+                .map(this::mapToJobResponse)
+                .toList();
     }
 
-    public Optional<JobPosting> updateJob(Long id, JobPosting updatedJob) {
+    public Optional<JobResponse> getJobById(Long id) {
+        return jobPostingRepository.findById(id)
+                .map(this::mapToJobResponse);
+    }
+
+    public Optional<JobResponse> updateJob(Long id, UpdateJobRequest request) {
         return jobPostingRepository.findById(id)
                 .map(existingJob -> {
-                    existingJob.setTitle(updatedJob.getTitle());
-                    existingJob.setDescription(updatedJob.getDescription());
-                    existingJob.setBudget(updatedJob.getBudget());
-                    existingJob.setStatus(updatedJob.getStatus());
-                    return jobPostingRepository.save(existingJob);
+                    existingJob.setTitle(request.title());
+                    existingJob.setDescription(request.description());
+                    existingJob.setBudget(request.budget());
+                    existingJob.setStatus(request.status());
+                    JobPosting savedJob = jobPostingRepository.save(existingJob);
+
+                    return mapToJobResponse(savedJob);
                 });
     }
 

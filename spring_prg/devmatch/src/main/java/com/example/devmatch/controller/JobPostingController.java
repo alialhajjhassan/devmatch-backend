@@ -2,7 +2,9 @@ package com.example.devmatch.controller;
 
 
 
-import com.example.devmatch.model.JobPosting;
+import com.example.devmatch.dto.CreateJobRequest;
+import com.example.devmatch.dto.JobResponse;
+import com.example.devmatch.dto.UpdateJobRequest;
 import com.example.devmatch.service.JobPostingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,29 +24,29 @@ public class JobPostingController {
     }
 
     @PostMapping
-    public ResponseEntity<JobPosting> createJob(@Valid @RequestBody JobPosting jobPosting) {
-        JobPosting createdJob = jobPostingService.createJob(jobPosting);
+    public ResponseEntity<JobResponse> createJob(@Valid @RequestBody CreateJobRequest request) {
+        JobResponse createdJob = jobPostingService.createJob(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdJob);
     }
 
     @GetMapping
-    public ResponseEntity<List<JobPosting>> getAllJobs() {
+    public ResponseEntity<List<JobResponse>> getAllJobs() {
         return ResponseEntity.ok(jobPostingService.getAllJobs());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JobPosting> getJobById(@PathVariable Long id) {
+    public ResponseEntity<JobResponse> getJobById(@PathVariable Long id) {
         return jobPostingService.getJobById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<JobPosting> updateJob(
+    public ResponseEntity<JobResponse> updateJob(
             @PathVariable Long id,
-            @Valid @RequestBody JobPosting updatedJob
+            @Valid @RequestBody UpdateJobRequest request
     ) {
-        return jobPostingService.updateJob(id, updatedJob)
+        return jobPostingService.updateJob(id, request)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
