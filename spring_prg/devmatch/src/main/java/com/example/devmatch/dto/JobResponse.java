@@ -11,6 +11,8 @@ public record JobResponse(
         String description,
         BigDecimal budget,
         JobStatus status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long clientId,
+        String clientUsername
 ) {
 }

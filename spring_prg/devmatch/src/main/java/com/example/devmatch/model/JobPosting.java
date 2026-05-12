@@ -40,6 +40,10 @@ public class JobPosting {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false)
+    private User client;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
