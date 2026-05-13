@@ -28,30 +28,17 @@ L'obiettivo del progetto è costruire, passo dopo passo, un backend realistico s
   *   **Maven**
 
 
-
-
-## 🛠️ Tecnologie previste nei prossimi step:
-  *   **Spring Security**
-  *   **JWT Authentication**
-  *   **PostgreSQL**
-  *   **Docker**
-  *   **JUnit 5+**
-  *   **Mockito**
-  *   **Swagger / OpenAPI**
-    
-
-
 ---
 
   
 
 ## 🏗️ Architettura
-Il progetto segue l'architettura a layer standard:
+The project follows the standard layer architecture:
 `Controller` -> `Service` -> `Repository` -> `Database`
 
 ## Project Structure
 
-```
+```text
 src/main/java/com/example/devmatch
 ├── controller
 │   ├── UserController.java
