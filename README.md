@@ -89,31 +89,29 @@ src/main/java/com/example/devmatch
 
 ## Main API Endpoints
 
-Users
+### Users
 
-Method           	Endpoint	                                  Description
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/users/register` | Register a new user |
+| GET | `/api/users` | Get all users |
 
-POST	             /api/users/register	                       Register a new user
-GET	              /api/users                                	Get all users
+### Jobs
 
-
-
-Jobs
-
-Method           	Endpoint	                                  Description
-
-POST	             /api/jobs	                                 Create a new job posting
-GET	              /api/jobs	                                 Get all job postings
-GET	              /api/jobs/{id}	                            Get job posting by id
-PUT              	/api/jobs/{id}	                            Update job posting
-DELETE	           /api/jobs/{id}	                            Delete job posting
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/jobs` | Create a new job posting |
+| GET | `/api/jobs` | Get all job postings |
+| GET | `/api/jobs/{id}` | Get job posting by id |
+| PUT | `/api/jobs/{id}` | Update job posting |
+| DELETE | `/api/jobs/{id}` | Delete job posting |
 
 
 ---
 
 ## Examples: 
 
-# Register User
+### Register User
 
 {
   "username": "client_1",
@@ -122,7 +120,7 @@ DELETE	           /api/jobs/{id}	                            Delete job posting
   "role": "CLIENT"
 }
 
-Response:
+#### Response:
 
 {
   "id": 1,
@@ -132,7 +130,7 @@ Response:
 }
 
 
-# Create Job Posting
+### Create Job Posting
 
 {
   "title": "Build a landing page",
@@ -141,7 +139,7 @@ Response:
   "clientId": 1
 }
 
-Response:
+#### Response:
 
 {
   "id": 1,
