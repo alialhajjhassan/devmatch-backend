@@ -112,35 +112,37 @@ src/main/java/com/example/devmatch
 ## Examples: 
 
 ### Register User
-
+```json
 {
   "username": "client_1",
   "email": "client1@example.com",
   "password": "password123",
   "role": "CLIENT"
 }
+```
 
 #### Response:
-
+```json
 {
   "id": 1,
   "username": "client_1",
   "email": "client1@example.com",
   "role": "CLIENT"
 }
-
+```
 
 ### Create Job Posting
-
+```json
 {
   "title": "Build a landing page",
   "description": "I need a responsive landing page for a SaaS product.",
   "budget": 500,
   "clientId": 1
 }
+```
 
 #### Response:
-
+```json
 {
   "id": 1,
   "title": "Build a landing page",
@@ -151,9 +153,10 @@ src/main/java/com/example/devmatch
   "clientId": 1,
   "clientUsername": "client_1"
 }
+```
 
-# Validation Error Response
-
+### Validation Error Response
+```json
 {
   "timestamp": "2026-05-12T18:10:31.3407402",
   "status": 400,
@@ -164,7 +167,7 @@ src/main/java/com/example/devmatch
     "password": "Password is mandatory"
   }
 }
-
+```
 
 ---
 
