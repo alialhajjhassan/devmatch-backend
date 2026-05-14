@@ -5,6 +5,18 @@ L'obiettivo del progetto è costruire, passo dopo passo, un backend realistico s
 
 ---
 
+## Current Features
+
+- User registration
+- User roles: CLIENT and FREELANCER
+- Job Posting CRUD
+- Validation with Jakarta Bean Validation
+- Global exception handling
+- DTO-based request and response models
+- Relationship between users and job postings
+- Business rule: only CLIENT users can create job postings
+  
+
 ## 🛠️ Tech Stack
   *   **Java 17+**
   *   **Spring Boot 3.x**
@@ -16,74 +28,166 @@ L'obiettivo del progetto è costruire, passo dopo passo, un backend realistico s
   *   **Maven**
 
 
-
-
-## 🛠️ Tecnologie previste nei prossimi step:
-  *   **Spring Security**
-  *   **JWT Authentication**
-  *   **PostgreSQL**
-  *   **Docker**
-  *   **JUnit 5+**
-  *   **Mockito**
-  *   **Swagger / OpenAPI**
-    
-
-
 ---
 
   
 
 ## 🏗️ Architettura
-Il progetto segue l'architettura a layer standard:
+The project follows the standard layer architecture:
 `Controller` -> `Service` -> `Repository` -> `Database`
 
-## 📈 Il Percorso dei 30 Giorni
-Sto documentando l'evoluzione di questo progetto giorno dopo giorno su LinkedIn. 
+## Project Structure
 
-<details>
-  
-<summary><b>Espandi per vedere la Roadmap (Giorno 1-30)</b></summary>
+```text
+src/main/java/com/example/devmatch
+├── controller
+│   ├── UserController.java
+│   └── JobPostingController.java
+│
+├── dto
+│   ├── RegisterUserRequest.java
+│   ├── UserResponse.java
+│   ├── CreateJobRequest.java
+│   ├── UpdateJobRequest.java
+│   └── JobResponse.java
+│
+├── exception
+│   ├── ErrorResponse.java
+│   ├── GlobalExceptionHandler.java
+│   └── ResourceNotFoundException.java
+│
+├── model
+│   ├── User.java
+│   ├── Role.java
+│   ├── JobPosting.java
+│   └── JobStatus.java
+│
+├── repository
+│   ├── UserRepository.java
+│   └── JobPostingRepository.java
+│
+└── service
+    ├── UserService.java
+    └── JobPostingService.java
 
-### Settimana 1: Foundations
-- [x] **Giorno 1 — Project Setup**
-        - Setup iniziale con Spring Boot 3
-        - Struttura a layer: Controller, Service, Repository
-        - Configurazione iniziale con JPA e database H2
-        - Primo push su GitHub
+```
 
-- [x] **Giorno 2 — User Model & Validation**
-        - Creazione della `User` entity
-        - Introduzione dell’enum `Role` (`FREELANCER`, `CLIENT`)
-        - Validazione dei dati con `@NotBlank`, `@Email`, `@NotNull`
-        - Constructor Injection per gestire le dipendenze
-        - Prime API per registrazione e lettura utenti
-      
-- [x] **Giorno 3 — Global Exception Handling**
-        - Creazione di una risposta standard per gli errori
-        - Gestione globale degli errori con `@RestControllerAdvice`
-        - Gestione degli errori di validazione con `@ExceptionHandler`
-        - Risposte JSON più chiare e coerenti per il client
+---
 
-- [x] **Giorno 4 — Job Posting CRUD**
-        - Creazione della `JobPosting` entity
-        - Introduzione dell’enum `JobStatus`
-        - API CRUD per gli annunci di lavoro
-        - Utilizzo di `ResponseEntity` e status code HTTP corretti
-        - Gestione dei casi `404 Not Found`
+## Main API Endpoints
 
-- [x] **Giorno 5 — DTO & API Contract**
-        - Introduzione dei DTO per separare Entity e API
-        - Creazione di `RegisterUserRequest` e `UserResponse`
-        - Creazione di `CreateJobRequest`, `UpdateJobRequest` e `JobResponse`
-        - Evitata l’esposizione di campi sensibili come la password
-        - Prima separazione tra modello di persistenza e contratto REST
+### Users
 
-- [ ] ... (aggiungerai gli altri man mano)
-</details>
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/users/register` | Register a new user |
+| GET | `/api/users` | Get all users |
+
+### Jobs
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/jobs` | Create a new job posting |
+| GET | `/api/jobs` | Get all job postings |
+| GET | `/api/jobs/{id}` | Get job posting by id |
+| PUT | `/api/jobs/{id}` | Update job posting |
+| DELETE | `/api/jobs/{id}` | Delete job posting |
 
 
+---
 
-## 🚀 Come avviare il progetto
-1. Clona la repository: `git clone ...`
-2. Avvia con Maven: `./mvnw spring-boot:run`
-3. Endpoint principale: `http://localhost:8080/api/users`
+## Examples: 
+
+### Register User
+```json
+{
+  "username": "client_1",
+  "email": "client1@example.com",
+  "password": "password123",
+  "role": "CLIENT"
+}
+```
+
+#### Response:
+```json
+{
+  "id": 1,
+  "username": "client_1",
+  "email": "client1@example.com",
+  "role": "CLIENT"
+}
+```
+
+### Create Job Posting
+```json
+{
+  "title": "Build a landing page",
+  "description": "I need a responsive landing page for a SaaS product.",
+  "budget": 500,
+  "clientId": 1
+}
+```
+
+#### Response:
+```json
+{
+  "id": 1,
+  "title": "Build a landing page",
+  "description": "I need a responsive landing page for a SaaS product.",
+  "budget": 500,
+  "status": "OPEN",
+  "createdAt": "2026-05-12T18:09:49.2509287",
+  "clientId": 1,
+  "clientUsername": "client_1"
+}
+```
+
+### Validation Error Response
+```json
+{
+  "timestamp": "2026-05-12T18:10:31.3407402",
+  "status": 400,
+  "message": "Validation failed",
+  "errors": {
+    "username": "Username is mandatory",
+    "email": "Email should be valid",
+    "password": "Password is mandatory"
+  }
+}
+```
+
+---
+
+
+## Business Rules Implemented
+
+  *   A user can have one role: CLIENT or FREELANCER
+  *   Only users with role CLIENT can create job postings
+  *   A job posting must be linked to an existing client
+  *   A job posting is created with default status OPEN
+  *   API responses use DTOs instead of exposing JPA entities directly
+
+
+## What I Did in Week 1
+
+  *   How to structure a Spring Boot project with layers
+  *   How to use Controller, Service and Repository
+  *   How Dependency Injection works
+  *   How to validate API requests
+  *   How to handle validation errors globally
+  *   How to use DTOs to separate API contracts from JPA entities
+  *   How to model JPA relationships with @OneToMany and @ManyToOne
+  *   How to use HTTP status codes like 200, 201, 204, 400 and 404
+
+
+## Next Steps
+
+  *   Spring Security
+  *   Password hashing
+  *   JWT authentication
+  *   Role-based access control
+  *   Unit and integration tests
+  *   OpenAPI documentation
+
+
+
