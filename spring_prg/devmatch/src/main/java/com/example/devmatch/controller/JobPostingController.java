@@ -23,6 +23,7 @@ public class JobPostingController {
         this.jobPostingService = jobPostingService;
     }
 
+
     @PostMapping
     public ResponseEntity<JobResponse> createJob(@Valid @RequestBody CreateJobRequest request) {
         JobResponse createdJob = jobPostingService.createJob(request);
