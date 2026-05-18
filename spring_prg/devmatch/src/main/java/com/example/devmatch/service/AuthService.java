@@ -13,10 +13,12 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -28,9 +30,9 @@ public class AuthService {
         if (!passwordMatches) {
             throw new InvalidCredentialsException("Invalid email or password");
         }
-
+        String token = jwtService.generateToken(user);
         return new AuthResponse(
-                "Login successful",
+                token,
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
