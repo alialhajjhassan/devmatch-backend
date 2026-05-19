@@ -15,10 +15,7 @@ public record CreateJobRequest(
 
         @NotNull(message = "Budget is mandatory")
         @Positive(message = "Budget must be greater than zero")
-        BigDecimal budget,
-
-        @NotNull(message = "Client id is mandatory")
-        Long clientId
+        BigDecimal budget
 
 ) {
 }

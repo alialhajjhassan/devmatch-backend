@@ -4,13 +4,13 @@ package com.example.devmatch.service;
 import com.example.devmatch.dto.CreateJobRequest;
 import com.example.devmatch.dto.JobResponse;
 import com.example.devmatch.dto.UpdateJobRequest;
-import com.example.devmatch.exception.ResourceNotFoundException;
+import com.example.devmatch.exception.UnauthorizedActionException;
 import com.example.devmatch.model.JobPosting;
 import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobPostingRepository;
-import com.example.devmatch.repository.UserRepository;
-import jakarta.persistence.EntityManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,18 +19,16 @@ import java.util.Optional;
 @Service
 public class JobPostingService {
     private final JobPostingRepository jobPostingRepository;
-    private final UserRepository userRepository;
-    public JobPostingService(JobPostingRepository jobPostingRepository, UserRepository userRepository) {
+    public JobPostingService(JobPostingRepository jobPostingRepository) {
         this.jobPostingRepository = jobPostingRepository;
-        this.userRepository = userRepository;
     }
 
     public JobResponse createJob(CreateJobRequest request) {
-        User client = userRepository.findById(request.clientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + request.clientId()));
 
-        if (client.getRole() != Role.CLIENT) {
-            throw new IllegalArgumentException("Only CLIENT users can create job postings");
+        User authenticatedUser = getAuthenticatedUser();
+
+        if (authenticatedUser.getRole() != Role.CLIENT) {
+            throw new UnauthorizedActionException("Only CLIENT users can create job postings");
         }
 
         JobPosting jobPosting = new JobPosting();
@@ -38,7 +36,7 @@ public class JobPostingService {
         jobPosting.setTitle(request.title());
         jobPosting.setDescription(request.description());
         jobPosting.setBudget(request.budget());
-        jobPosting.setClient(client);
+        jobPosting.setClient(authenticatedUser);
 
         JobPosting savedJob = jobPostingRepository.save(jobPosting);
         return mapToJobResponse(savedJob);
@@ -71,8 +69,10 @@ public class JobPostingService {
     }
 
     public Optional<JobResponse> updateJob(Long id, UpdateJobRequest request) {
+        User authenticatedUser = getAuthenticatedUser();
         return jobPostingRepository.findById(id)
                 .map(existingJob -> {
+                    validateJobOwnership(existingJob, authenticatedUser);
                     existingJob.setTitle(request.title());
                     existingJob.setDescription(request.description());
                     existingJob.setBudget(request.budget());
@@ -84,11 +84,34 @@ public class JobPostingService {
     }
 
     public boolean deleteJob(Long id) {
-        if (!jobPostingRepository.existsById(id)) {
+        User authenticatedUser = getAuthenticatedUser();
+        Optional<JobPosting> jobOptional = jobPostingRepository.findById(id);
+
+        if (jobOptional.isEmpty()) {
             return false;
         }
 
-        jobPostingRepository.deleteById(id);
+        JobPosting jobPosting = jobOptional.get();
+
+        validateJobOwnership(jobPosting, authenticatedUser);
+
+        jobPostingRepository.delete(jobPosting);
         return true;
+    }
+
+    private void validateJobOwnership(JobPosting jobPosting, User authenticatedUser) {
+        if (!jobPosting.getClient().getId().equals(authenticatedUser.getId())) {
+            throw new UnauthorizedActionException("You are not allowed to modify this job posting");
+        }
+    }
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
+            throw new UnauthorizedActionException("User is not authenticated");
+        }
+
+        return user;
     }
 }
