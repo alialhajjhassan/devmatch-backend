@@ -1,20 +1,30 @@
-# 🚀 DevMatch - Marketplace Backend
+# 🚀 DevMatch - Freelance Marketplace Backend
 
-DevMatch è una piattaforma backend professionale costruita con **Spring Boot 3**, progettata per connettere freelancer e clienti. 
-L'obiettivo del progetto è costruire, passo dopo passo, un backend realistico seguendo buone pratiche come architettura a layer, validazione, gestione degli errori, DTO, sicurezza, test e containerizzazione.
+DevMatch is a backend REST API built with **Spring Boot 3** for a freelance marketplace platform.
+
+The goal of this project is to build a realistic backend application step by step, following good practices such as layered architecture, validation, global exception handling, DTOs, authentication, authorization, testing and API documentation.
+
+This project is part of a 30-day backend development challenge focused on improving real-world Java and Spring Boot skills.
 
 ---
 
-## Current Features
+## ✅ Current Features
 
 - User registration
-- User roles: CLIENT and FREELANCER
+- User roles: `CLIENT` and `FREELANCER`
+- Password hashing with BCrypt
+- Login with email and password
+- JWT authentication
+- Role-based access control
 - Job Posting CRUD
+- Ownership check for job updates and deletion
 - Validation with Jakarta Bean Validation
 - Global exception handling
 - DTO-based request and response models
 - Relationship between users and job postings
-- Business rule: only CLIENT users can create job postings
+- Unit tests with JUnit and Mockito
+- Integration tests with MockMvc
+- Swagger/OpenAPI documentation
   
 
 ## 🛠️ Tech Stack
@@ -22,17 +32,36 @@ L'obiettivo del progetto è costruire, passo dopo passo, un backend realistico s
   *   **Spring Boot 3.x**
   *   **Spring Web**
   *   **Spring Data JPA**
-  *   **Spring Validation**
+  *   **Spring Security**
+  *   **JWT**
+  *   **BCrypt**
+  *   **Jakarta Bean Validation**
   *   **H2 Database**
   *   **Lombok**
   *   **Maven**
+  *   **JUnit 5**
+  *   **Mockito**
+  *   **MockMvc**
+  *   **Swagger/OpenAPI**
 
 
 ---
 
+## Main Responsibilities
+
+| Layer | Responsibility |
+|---|---|
+| Controller | Handles HTTP requests and responses |
+| Service | Contains business logic |
+| Repository | Handles database access |
+| DTO | Defines API request/response contracts |
+| Model | Represents JPA entities |
+| Exception | Centralized error handling |
+| Security | JWT authentication filter and security configuration |
+
   
 
-## 🏗️ Architettura
+## 🏗️ Architecture
 The project follows the standard layer architecture:
 `Controller` -> `Service` -> `Repository` -> `Database`
 
@@ -40,11 +69,18 @@ The project follows the standard layer architecture:
 
 ```text
 src/main/java/com/example/devmatch
+├── config
+│   ├── SecurityConfig.java
+│   └── OpenApiConfig.java
+│
 ├── controller
+│   ├── AuthController.java
 │   ├── UserController.java
 │   └── JobPostingController.java
 │
 ├── dto
+│   ├── AuthResponse.java
+│   ├── LoginRequest.java
 │   ├── RegisterUserRequest.java
 │   ├── UserResponse.java
 │   ├── CreateJobRequest.java
@@ -54,7 +90,9 @@ src/main/java/com/example/devmatch
 ├── exception
 │   ├── ErrorResponse.java
 │   ├── GlobalExceptionHandler.java
-│   └── ResourceNotFoundException.java
+│   ├── ResourceNotFoundException.java
+│   ├── InvalidCredentialsException.java
+│   └── UnauthorizedActionException.java
 │
 ├── model
 │   ├── User.java
@@ -66,39 +104,94 @@ src/main/java/com/example/devmatch
 │   ├── UserRepository.java
 │   └── JobPostingRepository.java
 │
+├── security
+│   └── JwtAuthenticationFilter.java
+│
 └── service
+    ├── AuthService.java
+    ├── JwtService.java
     ├── UserService.java
     └── JobPostingService.java
 
+```
+
+## Test Structure
+
+```text
+src/test/java/com/example/devmatch
+├── integration
+│   ├── UserAuthIntegrationTest.java
+│   └── JobPostingIntegrationTest.java
+│
+└── service
+    ├── UserServiceTest.java
+    ├── AuthServiceTest.java
+    └── JobPostingServiceTest.java
+
+```
+
+---
+
+## 🔐 Authentication & Authorization
+
+### DevMatch uses JWT-based authentication.
+
+#### Authentication flow:
+
+```
+1. User registers with email and password
+2. Password is hashed using BCrypt
+3. User logs in with email and password
+4. Backend validates credentials
+5. Backend generates a JWT
+6. Client sends the JWT in the Authorization header
+7. JwtAuthenticationFilter validates the token
+8. Spring Security authenticates the request
+
+```
+
+#### Authorization header example:
+
+```
+Authorization: Bearer <token>
 ```
 
 ---
 
 ## Main API Endpoints
 
+### Auth
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/api/auth/login` | Login and receive JWT token | Public |
+
+
 ### Users
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/users/register` | Register a new user |
-| GET | `/api/users` | Get all users |
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/api/users/register` | Register a new user | Public |
+| GET | `/api/users` | Get all users | Public for development |
 
 ### Jobs
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/jobs` | Create a new job posting |
-| GET | `/api/jobs` | Get all job postings |
-| GET | `/api/jobs/{id}` | Get job posting by id |
-| PUT | `/api/jobs/{id}` | Update job posting |
-| DELETE | `/api/jobs/{id}` | Delete job posting |
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/api/jobs` | Create a new job posting | Authenticated CLIENT |
+| GET | `/api/jobs` | Get all job postings |  Public |
+| GET | `/api/jobs/{id}` | Get job posting by id | Public |
+| PUT | `/api/jobs/{id}` | Update job posting | Job owner only |
+| DELETE | `/api/jobs/{id}` | Delete job posting | Job owner only |
 
 
 ---
 
-## Examples: 
+## 🧪 API Examples: 
 
 ### Register User
+
+#### Request:
 ```json
 {
   "username": "client_1",
@@ -116,15 +209,46 @@ src/main/java/com/example/devmatch
   "email": "client1@example.com",
   "role": "CLIENT"
 }
+
+The password is never returned in the API response.
+
+```
+
+### Login
+
+#### Request:
+```json
+{
+  "email": "client1@example.com",
+  "password": "password123"
+}
+```
+
+#### Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzUxMiJ9...",
+  "userId": 1,
+  "username": "client_1",
+  "email": "client1@example.com",
+  "role": "CLIENT"
+}
 ```
 
 ### Create Job Posting
+#### Requires JWT token from a CLIENT user.
+
+#### Request:
+``` text
+POST /api/jobs
+Authorization: Bearer <token>
+```
+#### Body:
 ```json
 {
   "title": "Build a landing page",
   "description": "I need a responsive landing page for a SaaS product.",
-  "budget": 500,
-  "clientId": 1
+  "budget": 500
 }
 ```
 
@@ -136,13 +260,13 @@ src/main/java/com/example/devmatch
   "description": "I need a responsive landing page for a SaaS product.",
   "budget": 500,
   "status": "OPEN",
-  "createdAt": "2026-05-12T18:09:49.2509287",
+  "createdAt": "2026-05-19T09:26:30.298222",
   "clientId": 1,
   "clientUsername": "client_1"
 }
 ```
 
-### Validation Error Response
+#### Validation Error Response
 ```json
 {
   "timestamp": "2026-05-12T18:10:31.3407402",
@@ -156,19 +280,107 @@ src/main/java/com/example/devmatch
 }
 ```
 
+#### Invalid Login Response
+```json
+{
+  "timestamp": "2026-05-19T09:10:00.123456",
+  "status": 401,
+  "message": "Invalid email or password",
+  "errors": null
+}
+```
+
+#### Unauthorized Action Response
+```json
+{
+  "timestamp": "2026-05-19T09:16:06.150169",
+  "status": 403,
+  "message": "Only CLIENT users can create job postings",
+  "errors": null
+}
+```
+
 ---
 
+## 📘 Swagger/OpenAPI
+
+### Swagger UI is available at:
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+### OpenAPI JSON is available at:
+```text
+http://localhost:8080/v3/api-docs
+```
+
+---
+
+## 🧪 Testing
+
+#### The project includes both unit tests and integration tests.
+
+### Unit Tests
+
+Unit tests focus on isolated service logic using JUnit and Mockito.
+
+##### Covered examples:
+
+* User registration hashes the password
+* Login returns JWT when credentials are valid
+* Login fails when email does not exist
+* Login fails when password is incorrect
+* CLIENT users can create job postings
+* FREELANCER users cannot create job postings
+
+### Integration Tests
+
+Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
+
+##### Covered examples:
+
+* Register user via HTTP
+* Validate bad request responses
+* Login and receive JWT
+* Access public job endpoints
+* Create job posting with valid Bearer Token
+* Block FREELANCER users from creating job postings
+
+##### Current test result:
+```text
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+##### Run tests:
+```bash
+mvn test
+```
+
+---
 
 ## Business Rules Implemented
 
   *   A user can have one role: CLIENT or FREELANCER
+  *   Passwords are hashed before being stored
+  *   Login returns a JWT token
+  *   Public endpoints can be accessed without authentication
+  *   Protected endpoints require a valid JWT
   *   Only users with role CLIENT can create job postings
-  *   A job posting must be linked to an existing client
+  *   FREELANCER users cannot create job postings
+  *   A job posting is automatically linked to the authenticated client
+  *   The client does not send clientId when creating a job
+  *   Only the owner of a job posting can update it
+  *   Only the owner of a job posting can delete it
   *   A job posting is created with default status OPEN
   *   API responses use DTOs instead of exposing JPA entities directly
 
+---
 
-## What I Did in Week 1
+
+## 📚 What I Learned So Far
+
+### Week 1
 
   *   How to structure a Spring Boot project with layers
   *   How to use Controller, Service and Repository
@@ -176,18 +388,47 @@ src/main/java/com/example/devmatch
   *   How to validate API requests
   *   How to handle validation errors globally
   *   How to use DTOs to separate API contracts from JPA entities
-  *   How to model JPA relationships with @OneToMany and @ManyToOne
+  *   How to model JPA relationships with `@OneToMany` and `@ManyToOne`
   *   How to use HTTP status codes like 200, 201, 204, 400 and 404
 
 
-## Next Steps
+### Week 2
 
-  *   Spring Security
-  *   Password hashing
-  *   JWT authentication
-  *   Role-based access control
-  *   Unit and integration tests
-  *   OpenAPI documentation
+*   How to configure Spring Security
+*   Difference between authentication and authorization
+*   How to hash passwords with BCrypt
+*   How to implement login with email and password
+*   How to generate and validate JWT tokens
+*   How to use Bearer Token authentication
+*   How to use `SecurityContextHolder`
+*   How to implement role-based access control
+*   How to implement ownership checks
+*   How to write unit tests with JUnit and Mockito
+*   How to write integration tests with MockMvc
+*   How to document APIs with Swagger/OpenAPI
+
+---
+
+
+## 🚧 Next Steps
+
+  *   Pagination and sorting for job postings
+  *   Filtering job postings by status, title and budget
+  *   Job applications by freelancers
+  *   Application status management: PENDING, ACCEPTED, REJECTED
+  *   Event-based notifications
+  *   Docker support
+  *   PostgreSQL with Docker Compose
+  *   Spring profiles
+  *   Actuator monitoring
+  *   Final production-style README and demo
+
+---
+
+## 👨‍💻 Author
+
+Built by Ali Alhaj Hassan as part of a 30-day Spring Boot backend development challenge.
+
 
 
 
