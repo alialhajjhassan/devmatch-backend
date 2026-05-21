@@ -37,6 +37,7 @@
                     )
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers("/h2-console/**").permitAll()
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
