@@ -110,6 +110,12 @@ class UserAuthIntegrationTest {
     @Test
     void getJobs_shouldBePublic() throws Exception {
         mockMvc.perform(get("/api/jobs"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").exists())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").exists())
+                .andExpect(jsonPath("$.totalPages").exists())
+                .andExpect(jsonPath("$.last").exists());
     }
 }

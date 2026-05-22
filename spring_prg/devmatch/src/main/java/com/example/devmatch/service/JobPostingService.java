@@ -6,12 +6,20 @@ import com.example.devmatch.dto.JobResponse;
 import com.example.devmatch.dto.UpdateJobRequest;
 import com.example.devmatch.exception.UnauthorizedActionException;
 import com.example.devmatch.model.JobPosting;
+import com.example.devmatch.model.JobStatus;
 import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobPostingRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.example.devmatch.dto.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+
 
 import java.util.List;
 import java.util.Optional;
@@ -56,11 +64,46 @@ public class JobPostingService {
         );
     }
 
-    public List<JobResponse> getAllJobs() {
-        return jobPostingRepository.findAll()
+
+    public PagedResponse<JobResponse> getAllJobs(
+            int page,
+            int size,
+            String sortBy,
+            String direction,
+            JobStatus status,
+            String title
+    ) {
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<JobPosting> jobPage;
+
+        if (status != null && title != null && !title.isBlank()) {
+            jobPage = jobPostingRepository.findByStatusAndTitleContainingIgnoreCase(status, title, pageable);
+        } else if (status != null) {
+            jobPage = jobPostingRepository.findByStatus(status, pageable);
+        } else if (title != null && !title.isBlank()) {
+            jobPage = jobPostingRepository.findByTitleContainingIgnoreCase(title, pageable);
+        } else {
+            jobPage = jobPostingRepository.findAll(pageable);
+        }
+
+        List<JobResponse> content = jobPage.getContent()
                 .stream()
                 .map(this::mapToJobResponse)
                 .toList();
+
+        return new PagedResponse<>(
+                content,
+                jobPage.getNumber(),
+                jobPage.getSize(),
+                jobPage.getTotalElements(),
+                jobPage.getTotalPages(),
+                jobPage.isLast()
+        );
     }
 
     public Optional<JobResponse> getJobById(Long id) {
