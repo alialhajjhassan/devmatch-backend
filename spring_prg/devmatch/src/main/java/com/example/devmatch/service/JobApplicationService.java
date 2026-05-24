@@ -2,12 +2,10 @@ package com.example.devmatch.service;
 
 import com.example.devmatch.dto.ApplicationResponse;
 import com.example.devmatch.dto.CreateApplicationRequest;
+import com.example.devmatch.dto.UpdateApplicationStatusRequest;
 import com.example.devmatch.exception.ResourceNotFoundException;
 import com.example.devmatch.exception.UnauthorizedActionException;
-import com.example.devmatch.model.JobApplication;
-import com.example.devmatch.model.JobPosting;
-import com.example.devmatch.model.Role;
-import com.example.devmatch.model.User;
+import com.example.devmatch.model.*;
 import com.example.devmatch.repository.JobApplicationRepository;
 import com.example.devmatch.repository.JobPostingRepository;
 import org.springframework.security.core.Authentication;
@@ -78,5 +76,37 @@ public class JobApplicationService {
         }
 
         return user;
+    }
+
+    public ApplicationResponse updateApplicationStatus(
+            Long applicationId,
+            UpdateApplicationStatusRequest request
+    ) {
+        User authenticatedUser = getAuthenticatedUser();
+
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Application not found with id: " + applicationId
+                ));
+
+        JobPosting jobPosting = application.getJobPosting();
+
+        if (authenticatedUser.getRole() != Role.CLIENT) {
+            throw new UnauthorizedActionException("Only CLIENT users can update application status");
+        }
+
+        if (!jobPosting.getClient().getId().equals(authenticatedUser.getId())) {
+            throw new UnauthorizedActionException("You are not allowed to update this application");
+        }
+
+        if (request.status() == ApplicationStatus.PENDING) {
+            throw new IllegalArgumentException("Application status can only be updated to ACCEPTED or REJECTED");
+        }
+
+        application.setStatus(request.status());
+
+        JobApplication savedApplication = jobApplicationRepository.save(application);
+
+        return mapToApplicationResponse(savedApplication);
     }
 }

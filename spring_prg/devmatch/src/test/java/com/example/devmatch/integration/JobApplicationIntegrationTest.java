@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -159,6 +160,168 @@ class JobApplicationIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Job posting not found with id: 999"));
     }
 
+    @Test
+    void updateApplicationStatus_shouldReturnOk_whenOwnerClientAcceptsApplication() throws Exception {
+        String clientToken = registerAndLogin(
+                "client_status_owner",
+                "clientstatusowner@example.com",
+                "CLIENT"
+        );
+
+        Long jobId = createJob(clientToken);
+
+        String freelancerToken = registerAndLogin(
+                "freelancer_status_owner",
+                "freelancerstatusowner@example.com",
+                "FREELANCER"
+        );
+
+        Long applicationId = applyToJob(jobId, freelancerToken);
+
+        String updateStatusBody = """
+            {
+              "status": "ACCEPTED"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/applications/" + applicationId + "/status")
+                        .header("Authorization", "Bearer " + clientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateStatusBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(applicationId))
+                .andExpect(jsonPath("$.jobId").value(jobId))
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+    }
+
+    @Test
+    void updateApplicationStatus_shouldReturnForbidden_whenUserIsFreelancer() throws Exception {
+        String clientToken = registerAndLogin(
+                "client_status_freelancer_block",
+                "clientstatusfreelancerblock@example.com",
+                "CLIENT"
+        );
+
+        Long jobId = createJob(clientToken);
+
+        String freelancerToken = registerAndLogin(
+                "freelancer_status_blocked",
+                "freelancerstatusblocked@example.com",
+                "FREELANCER"
+        );
+
+        Long applicationId = applyToJob(jobId, freelancerToken);
+
+        String updateStatusBody = """
+            {
+              "status": "ACCEPTED"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/applications/" + applicationId + "/status")
+                        .header("Authorization", "Bearer " + freelancerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateStatusBody))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Only CLIENT users can update application status"));
+    }
+
+    @Test
+    void updateApplicationStatus_shouldReturnForbidden_whenClientIsNotJobOwner() throws Exception {
+        String ownerClientToken = registerAndLogin(
+                "client_status_real_owner",
+                "clientstatusrealowner@example.com",
+                "CLIENT"
+        );
+
+        Long jobId = createJob(ownerClientToken);
+
+        String freelancerToken = registerAndLogin(
+                "freelancer_status_other_client",
+                "freelancerstatusotherclient@example.com",
+                "FREELANCER"
+        );
+
+        Long applicationId = applyToJob(jobId, freelancerToken);
+
+        String otherClientToken = registerAndLogin(
+                "client_status_other",
+                "clientstatusother@example.com",
+                "CLIENT"
+        );
+
+        String updateStatusBody = """
+            {
+              "status": "ACCEPTED"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/applications/" + applicationId + "/status")
+                        .header("Authorization", "Bearer " + otherClientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateStatusBody))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("You are not allowed to update this application"));
+    }
+
+    @Test
+    void updateApplicationStatus_shouldReturnBadRequest_whenStatusIsPending() throws Exception {
+        String clientToken = registerAndLogin(
+                "client_status_pending",
+                "clientstatuspending@example.com",
+                "CLIENT"
+        );
+
+        Long jobId = createJob(clientToken);
+
+        String freelancerToken = registerAndLogin(
+                "freelancer_status_pending",
+                "freelancerstatuspending@example.com",
+                "FREELANCER"
+        );
+
+        Long applicationId = applyToJob(jobId, freelancerToken);
+
+        String updateStatusBody = """
+            {
+              "status": "PENDING"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/applications/" + applicationId + "/status")
+                        .header("Authorization", "Bearer " + clientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateStatusBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Application status can only be updated to ACCEPTED or REJECTED"));
+    }
+
+    @Test
+    void updateApplicationStatus_shouldReturnNotFound_whenApplicationDoesNotExist() throws Exception {
+        String clientToken = registerAndLogin(
+                "client_status_not_found",
+                "clientstatusnotfound@example.com",
+                "CLIENT"
+        );
+
+        String updateStatusBody = """
+            {
+              "status": "ACCEPTED"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/applications/999/status")
+                        .header("Authorization", "Bearer " + clientToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateStatusBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Application not found with id: 999"));
+    }
+
     private String registerAndLogin(String username, String email, String role) throws Exception {
         String registerBody = """
                 {
@@ -211,6 +374,25 @@ class JobApplicationIntegrationTest {
                 .getContentAsString();
 
         return extractLongField(jobResponse, "id");
+    }
+
+    private Long applyToJob(Long jobId, String freelancerToken) throws Exception {
+        String applicationBody = """
+            {
+              "coverLetter": "Hi, I have experience building landing pages and REST APIs."
+            }
+            """;
+
+        String applicationResponse = mockMvc.perform(post("/api/jobs/" + jobId + "/applications")
+                        .header("Authorization", "Bearer " + freelancerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(applicationBody))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return extractLongField(applicationResponse, "id");
     }
 
     private String extractToken(String json) {
