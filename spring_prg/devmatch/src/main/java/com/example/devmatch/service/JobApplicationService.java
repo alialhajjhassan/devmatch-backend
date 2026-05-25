@@ -5,25 +5,33 @@ import com.example.devmatch.dto.CreateApplicationRequest;
 import com.example.devmatch.dto.UpdateApplicationStatusRequest;
 import com.example.devmatch.exception.ResourceNotFoundException;
 import com.example.devmatch.exception.UnauthorizedActionException;
-import com.example.devmatch.model.*;
+import com.example.devmatch.model.ApplicationStatus;
+import com.example.devmatch.model.JobApplication;
+import com.example.devmatch.model.JobPosting;
+import com.example.devmatch.model.Role;
+import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobApplicationRepository;
 import com.example.devmatch.repository.JobPostingRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.example.devmatch.event.ApplicationCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
     private final JobPostingRepository jobPostingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public JobApplicationService(
             JobApplicationRepository jobApplicationRepository,
-            JobPostingRepository jobPostingRepository
+            JobPostingRepository jobPostingRepository, ApplicationEventPublisher eventPublisher
     ) {
         this.jobApplicationRepository = jobApplicationRepository;
         this.jobPostingRepository = jobPostingRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public ApplicationResponse applyToJob(Long jobId, CreateApplicationRequest request) {
@@ -51,6 +59,8 @@ public class JobApplicationService {
         application.setCoverLetter(request.coverLetter());
 
         JobApplication savedApplication = jobApplicationRepository.save(application);
+
+        eventPublisher.publishEvent(new ApplicationCreatedEvent(savedApplication));
 
         return mapToApplicationResponse(savedApplication);
     }
