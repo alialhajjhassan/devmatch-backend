@@ -18,10 +18,18 @@ This project is part of a 30-day backend development challenge focused on improv
 - Role-based access control
 - Job Posting CRUD
 - Ownership check for job updates and deletion
+- Pagination, sorting and filtering for job postings
 - Validation with Jakarta Bean Validation
 - Global exception handling
 - DTO-based request and response models
 - Relationship between users and job postings
+- Freelancers can apply to job postings
+- Duplicate applications prevention
+- Application status management: `PENDING`, `ACCEPTED`, `REJECTED`
+- Clients can accept or reject job applications
+- Event-based notification simulation with Spring Events
+- Dockerized Spring Boot application
+- Docker Compose setup with PostgreSQL
 - Unit tests with JUnit and Mockito
 - Integration tests with MockMvc
 - Swagger/OpenAPI documentation
@@ -36,13 +44,18 @@ This project is part of a 30-day backend development challenge focused on improv
   *   **JWT**
   *   **BCrypt**
   *   **Jakarta Bean Validation**
-  *   **H2 Database**
+  *   **H2 Database for tests/local fallback**
   *   **Lombok**
   *   **Maven**
   *   **JUnit 5**
   *   **Mockito**
   *   **MockMvc**
   *   **Swagger/OpenAPI**
+  *   **PostgreSQL**
+  *   **Docker**
+  *   **Docker Compose**
+  *   **Spring Events**
+  *   **SLF4J Logging**
 
 
 ---
@@ -72,11 +85,13 @@ src/main/java/com/example/devmatch
 ├── config
 │   ├── SecurityConfig.java
 │   └── OpenApiConfig.java
-│
+│   
 ├── controller
 │   ├── AuthController.java
 │   ├── UserController.java
-│   └── JobPostingController.java
+│   ├── JobPostingController.java
+│   ├── JobApplicationController.java
+│   └── ApplicationController.java
 │
 ├── dto
 │   ├── AuthResponse.java
@@ -85,7 +100,14 @@ src/main/java/com/example/devmatch
 │   ├── UserResponse.java
 │   ├── CreateJobRequest.java
 │   ├── UpdateJobRequest.java
-│   └── JobResponse.java
+│   ├── JobResponse.java
+│   ├── PagedResponse.java
+│   ├── CreateApplicationRequest.java
+│   ├── UpdateApplicationStatusRequest.java
+│   └── ApplicationResponse.java
+│
+├── event
+│   └── ApplicationCreatedEvent.java
 │
 ├── exception
 │   ├── ErrorResponse.java
@@ -98,11 +120,17 @@ src/main/java/com/example/devmatch
 │   ├── User.java
 │   ├── Role.java
 │   ├── JobPosting.java
-│   └── JobStatus.java
+│   ├── JobStatus.java
+│   ├── JobApplication.java
+│   └── ApplicationStatus.java
+│
+├── listener
+│   └── ApplicationNotificationListener.java
 │
 ├── repository
 │   ├── UserRepository.java
-│   └── JobPostingRepository.java
+│   ├── JobPostingRepository.java
+│   └── JobApplicationRepository.java
 │
 ├── security
 │   └── JwtAuthenticationFilter.java
@@ -111,7 +139,8 @@ src/main/java/com/example/devmatch
     ├── AuthService.java
     ├── JwtService.java
     ├── UserService.java
-    └── JobPostingService.java
+    ├── JobPostingService.java
+    └── JobApplicationService.java
 
 ```
 
@@ -121,7 +150,8 @@ src/main/java/com/example/devmatch
 src/test/java/com/example/devmatch
 ├── integration
 │   ├── UserAuthIntegrationTest.java
-│   └── JobPostingIntegrationTest.java
+│   ├── JobPostingIntegrationTest.java
+│   └── JobApplicationIntegrationTest.java
 │
 └── service
     ├── UserServiceTest.java
@@ -179,10 +209,17 @@ Authorization: Bearer <token>
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | POST | `/api/jobs` | Create a new job posting | Authenticated CLIENT |
-| GET | `/api/jobs` | Get all job postings |  Public |
+| GET | `/api/jobs?page=0&size=10&sortBy=createdAt&direction=desc` | Get paginated job postings |  Public |
 | GET | `/api/jobs/{id}` | Get job posting by id | Public |
 | PUT | `/api/jobs/{id}` | Update job posting | Job owner only |
 | DELETE | `/api/jobs/{id}` | Delete job posting | Job owner only |
+
+### Applications
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/api/jobs/{jobId}/applications` | Apply to a job posting | Authenticated FREELANCER |
+| PATCH | `/api/applications/{applicationId}/status` | Accept or reject an application | Job owner CLIENT only |
 
 
 ---
@@ -209,14 +246,16 @@ Authorization: Bearer <token>
   "email": "client1@example.com",
   "role": "CLIENT"
 }
+```
 
 The password is never returned in the API response.
 
-```
 
 ### Login
 
 #### Request:
+
+##### Body:
 ```json
 {
   "email": "client1@example.com",
@@ -243,7 +282,7 @@ The password is never returned in the API response.
 POST /api/jobs
 Authorization: Bearer <token>
 ```
-#### Body:
+##### Body:
 ```json
 {
   "title": "Build a landing page",
@@ -300,6 +339,67 @@ Authorization: Bearer <token>
 }
 ```
 
+### Apply to a Job Posting
+
+Requires JWT token from a `FREELANCER` user.
+
+#### Request:
+``` text
+POST /api/jobs/{jobId}/applications
+Authorization: Bearer <token>
+```
+##### Body:
+```json
+{
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs."
+}
+```
+
+#### Response:
+```json
+{
+  "id": 1,
+  "jobId": 1,
+  "jobTitle": "Build a React landing page",
+  "freelancerId": 2,
+  "freelancerUsername": "freelancer_app",
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
+  "status": "PENDING",
+  "createdAt": "2026-05-23T02:31:09.2767268"
+}
+```
+
+### Update Application Status
+
+Requires JWT token from the `CLIENT` owner of the job posting.
+
+#### Request:
+``` text
+PATCH /api/applications/{applicationId}/status
+Authorization: Bearer <token>
+```
+##### Body:
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+
+#### Response:
+```json
+{
+  "id": 1,
+  "jobId": 1,
+  "jobTitle": "Build a React landing page",
+  "freelancerId": 2,
+  "freelancerUsername": "freelancer_app",
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
+  "status": "ACCEPTED",
+  "createdAt": "2026-05-23T02:31:09.2767268"
+}
+```
+
+    
 ---
 
 ## 📘 Swagger/OpenAPI
@@ -345,10 +445,18 @@ Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
 * Access public job endpoints
 * Create job posting with valid Bearer Token
 * Block FREELANCER users from creating job postings
+* Validate pagination and sorting errors
+* Freelancers can apply to job postings
+* Duplicate job applications are blocked
+* Clients cannot apply to job postings
+* Job owners can accept or reject applications
+* Freelancers cannot update application status
+* Non-owner clients cannot update application status
+
 
 ##### Current test result:
 ```text
-Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 26, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
@@ -361,18 +469,26 @@ mvn test
 
 ## Business Rules Implemented
 
-  *   A user can have one role: CLIENT or FREELANCER
+  *   A user can have one role: `CLIENT` or `FREELANCER`
   *   Passwords are hashed before being stored
   *   Login returns a JWT token
   *   Public endpoints can be accessed without authentication
   *   Protected endpoints require a valid JWT
-  *   Only users with role CLIENT can create job postings
+  *   Only users with role `CLIENT` can create job postings
   *   FREELANCER users cannot create job postings
   *   A job posting is automatically linked to the authenticated client
-  *   The client does not send clientId when creating a job
+  *   The client does not send `clientId` when creating a job
   *   Only the owner of a job posting can update it
   *   Only the owner of a job posting can delete it
-  *   A job posting is created with default status OPEN
+  *   A job posting is created with default status `OPEN`
+  *   Job postings support pagination, sorting and filtering
+  *   Only `FREELANCER` users can apply to job postings
+  *   `CLIENT` users cannot apply to job postings
+  *   A freelancer cannot apply twice to the same job posting
+  *   A new application is created with default status `PENDING`
+  *   Only the job owner can update an application status
+  *   `FREELANCER` users cannot update application status
+  *   Application status can only be updated to `ACCEPTED` or `REJECTED`
   *   API responses use DTOs instead of exposing JPA entities directly
 
 ---
@@ -407,23 +523,84 @@ mvn test
 *   How to write integration tests with MockMvc
 *   How to document APIs with Swagger/OpenAPI
 
+
+### Week 3
+
+- How to implement pagination, sorting and filtering with Spring Data JPA
+- How to create generic paginated responses with `PagedResponse<T>`
+- How to validate query parameters
+- How to model job applications as a domain entity
+- How to prevent duplicate applications with a database unique constraint
+- How to manage application status transitions
+- How to use Spring Events with `ApplicationEventPublisher`
+- How to handle events with `@EventListener`
+- How to separate notification logic from business logic
+- How to dockerize a Spring Boot application
+- How to create a multi-stage Dockerfile
+- How to run Spring Boot and PostgreSQL with Docker Compose
+- How Docker containers communicate using service names
+- How to persist PostgreSQL data with Docker volumes
+
 ---
 
 
 ## 🚧 Next Steps
 
-  *   Pagination and sorting for job postings
-  *   Filtering job postings by status, title and budget
-  *   Job applications by freelancers
-  *   Application status management: PENDING, ACCEPTED, REJECTED
-  *   Event-based notifications
-  *   Docker support
-  *   PostgreSQL with Docker Compose
-  *   Spring profiles
-  *   Actuator monitoring
+  *   Spring profiles: `dev`, `test`, `prod`
+  *   Spring Boot Actuator monitoring
+  *   Centralized configuration for JWT secret and expiration
+  *   Improve error responses for invalid JWT tokens
+  *   Add ObjectMapper-based helpers in integration tests
+  *   Add unit tests for event publishing
+  *   Add application status notification events
   *   Final production-style README and demo
 
 ---
+
+
+## 🐳 Docker Compose
+
+Run the full stack with PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+### Run in detached mode:
+
+```bash
+docker compose up --build -d
+```
+
+### Stop containers:
+
+```bash
+docker compose down
+```
+
+### Stop containers and remove PostgreSQL data volume:
+
+```bash
+docker compose down -v
+```
+
+### View application logs:
+
+```bash
+docker compose logs -f app
+```
+
+---
+
+
+### Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+---
+
 
 ## 👨‍💻 Author
 

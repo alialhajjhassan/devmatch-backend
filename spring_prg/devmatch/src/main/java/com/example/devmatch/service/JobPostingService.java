@@ -73,6 +73,22 @@ public class JobPostingService {
             JobStatus status,
             String title
     ) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must not be negative");
+        }
+
+        if (size <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than zero");
+        }
+
+        if (!direction.equalsIgnoreCase("asc") && !direction.equalsIgnoreCase("desc")) {
+            throw new IllegalArgumentException("Sort direction must be either asc or desc");
+        }
+
+        validateSortBy(sortBy);
+
+
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
@@ -156,5 +172,13 @@ public class JobPostingService {
         }
 
         return user;
+    }
+
+    private void validateSortBy(String sortBy) {
+        List<String> allowedSortFields = List.of("id", "title", "budget", "status", "createdAt");
+
+        if (!allowedSortFields.contains(sortBy)) {
+            throw new IllegalArgumentException("Invalid sort field: " + sortBy);
+        }
     }
 }
