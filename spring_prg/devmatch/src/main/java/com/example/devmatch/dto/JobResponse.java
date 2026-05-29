@@ -12,6 +12,7 @@ public record JobResponse(
         BigDecimal budget,
         JobStatus status,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         Long clientId,
         String clientUsername
 ) {

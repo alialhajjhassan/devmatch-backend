@@ -72,7 +72,8 @@ class JobApplicationIntegrationTest {
                 .andExpect(jsonPath("$.freelancerUsername").value("freelancer_apply_test"))
                 .andExpect(jsonPath("$.coverLetter").value("Hi, I have experience building landing pages and REST APIs."))
                 .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.createdAt", notNullValue()));
+                .andExpect(jsonPath("$.createdAt", notNullValue()))
+                .andExpect(jsonPath("$.updatedAt", notNullValue()));;
     }
 
     @Test

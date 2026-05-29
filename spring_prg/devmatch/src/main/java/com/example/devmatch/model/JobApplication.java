@@ -1,5 +1,6 @@
 package com.example.devmatch.model;
 
+import com.example.devmatch.model.audit.Auditable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class JobApplication {
+public class JobApplication extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,9 +33,6 @@ public class JobApplication {
     @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_id", nullable = false)
     private JobPosting jobPosting;
@@ -43,8 +41,4 @@ public class JobApplication {
     @JoinColumn(name = "freelancer_id", nullable = false)
     private User freelancer;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

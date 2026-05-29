@@ -59,6 +59,7 @@ public class JobPostingService {
                 jobPosting.getBudget(),
                 jobPosting.getStatus(),
                 jobPosting.getCreatedAt(),
+                jobPosting.getUpdatedAt(),
                 client.getId(),
                 client.getUsername()
         );

@@ -90,7 +90,9 @@ class JobPostingIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Build integration test landing page"))
                 .andExpect(jsonPath("$.budget").value(500))
                 .andExpect(jsonPath("$.status").value("OPEN"))
-                .andExpect(jsonPath("$.clientUsername").value("client_job_test"));
+                .andExpect(jsonPath("$.clientUsername").value("client_job_test"))
+                .andExpect(jsonPath("$.createdAt", notNullValue()))
+                .andExpect(jsonPath("$.updatedAt", notNullValue()));;
     }
 
     @Test

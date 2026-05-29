@@ -15,7 +15,8 @@
     import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
     @Configuration
-    public class SecurityConfig {
+    public class
+    SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
 

@@ -12,6 +12,7 @@ public record ApplicationResponse(
         String freelancerUsername,
         String coverLetter,
         ApplicationStatus status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
 }

@@ -33,6 +33,7 @@ This project is part of a 30-day backend development challenge focused on improv
 - Unit tests with JUnit and Mockito
 - Integration tests with MockMvc
 - Swagger/OpenAPI documentation
+- Automatic auditing with `createdAt` and `updatedAt`
   
 
 ## 🛠️ Tech Stack
@@ -56,6 +57,7 @@ This project is part of a 30-day backend development challenge focused on improv
   *   **Docker Compose**
   *   **Spring Events**
   *   **SLF4J Logging**
+  *   **Spring Data JPA Auditing**
 
 
 ---
@@ -490,6 +492,7 @@ mvn test
   *   `FREELANCER` users cannot update application status
   *   Application status can only be updated to `ACCEPTED` or `REJECTED`
   *   API responses use DTOs instead of exposing JPA entities directly
+  *   Main entities include automatic `createdAt` and `updatedAt` audit fields
 
 ---
 

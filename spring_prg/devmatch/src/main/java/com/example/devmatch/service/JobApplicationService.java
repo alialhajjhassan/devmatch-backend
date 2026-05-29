@@ -74,7 +74,8 @@ public class JobApplicationService {
                 application.getFreelancer().getUsername(),
                 application.getCoverLetter(),
                 application.getStatus(),
-                application.getCreatedAt()
+                application.getCreatedAt(),
+                application.getUpdatedAt()
         );
     }
 
