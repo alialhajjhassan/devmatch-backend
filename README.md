@@ -34,6 +34,7 @@ This project is part of a 30-day backend development challenge focused on improv
 - Integration tests with MockMvc
 - Swagger/OpenAPI documentation
 - Automatic auditing with `createdAt` and `updatedAt`
+- Application monitoring with Spring Boot Actuator
   
 
 ## 🛠️ Tech Stack
@@ -58,6 +59,7 @@ This project is part of a 30-day backend development challenge focused on improv
   *   **Spring Events**
   *   **SLF4J Logging**
   *   **Spring Data JPA Auditing**
+  *   **Spring Boot Actuator**
 
 
 ---
@@ -458,7 +460,7 @@ Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
 
 ##### Current test result:
 ```text
-Tests run: 26, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 30, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
@@ -592,6 +594,35 @@ docker compose down -v
 ```bash
 docker compose logs -f app
 ```
+
+
+---
+
+## 📊 Monitoring with Actuator
+
+### Health endpoint:
+```text
+http://localhost:8080/actuator/health
+```
+
+### Health endpoint:
+```text
+http://localhost:8080/actuator/info
+```
+
+### Exposed endpoints:
+*   health
+*   info
+*   metrics
+
+### Public endpoints:
+* ``` /actuator/health```
+* ``` /actuator/info```
+
+
+### Protected endpoints:
+* ``` /actuator/metrics```
+
 
 ---
 
