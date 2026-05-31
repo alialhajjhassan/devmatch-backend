@@ -23,6 +23,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/devmatch
       SPRING_DATASOURCE_USERNAME: devmatch_user
       SPRING_DATASOURCE_PASSWORD: devmatch_password

@@ -35,6 +35,7 @@ This project is part of a 30-day backend development challenge focused on improv
 - Swagger/OpenAPI documentation
 - Automatic auditing with `createdAt` and `updatedAt`
 - Application monitoring with Spring Boot Actuator
+- Environment-specific configuration with Spring Profiles
   
 
 ## 🛠️ Tech Stack
@@ -405,6 +406,39 @@ Authorization: Bearer <token>
 
     
 ---
+
+## ⚙️ Spring Profiles
+
+The project uses different Spring profiles for different environments:
+
+| Profile | Purpose | Database |
+|---|---|---|
+| `dev` | Local development | H2 in-memory |
+| `test` | Automated tests | H2 in-memory |
+| `docker` | Docker Compose environment | PostgreSQL |
+
+
+#### Default profile:
+
+```text
+dev
+```
+
+#### Docker profile is enabled through Docker Compose:
+
+```text
+SPRING_PROFILES_ACTIVE: docker
+```
+
+#### Integration tests use:
+
+```text
+@ActiveProfiles("test")
+```
+
+
+---
+
 
 ## 📘 Swagger/OpenAPI
 
