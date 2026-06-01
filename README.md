@@ -36,6 +36,7 @@ This project is part of a 30-day backend development challenge focused on improv
 - Automatic auditing with `createdAt` and `updatedAt`
 - Application monitoring with Spring Boot Actuator
 - Environment-specific configuration with Spring Profiles
+- Simulated payments for accepted applications
   
 
 ## 🛠️ Tech Stack
@@ -529,6 +530,11 @@ mvn test
   *   Application status can only be updated to `ACCEPTED` or `REJECTED`
   *   API responses use DTOs instead of exposing JPA entities directly
   *   Main entities include automatic `createdAt` and `updatedAt` audit fields
+  *   Only the job owner can pay for an accepted application
+  *   Only `ACCEPTED` applications can be paid
+  *   A job application can only be paid once
+  *   `FREELANCER` users cannot create payments
+
 
 ---
 

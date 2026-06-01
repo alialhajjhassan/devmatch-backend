@@ -41,4 +41,8 @@ public class JobApplication extends Auditable {
     @JoinColumn(name = "freelancer_id", nullable = false)
     private User freelancer;
 
+
+    @OneToOne(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
+
 }

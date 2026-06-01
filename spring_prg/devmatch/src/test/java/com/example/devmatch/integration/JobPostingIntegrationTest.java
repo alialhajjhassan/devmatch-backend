@@ -94,7 +94,7 @@ class JobPostingIntegrationTest {
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andExpect(jsonPath("$.clientUsername").value("client_job_test"))
                 .andExpect(jsonPath("$.createdAt", notNullValue()))
-                .andExpect(jsonPath("$.updatedAt", notNullValue()));;
+                .andExpect(jsonPath("$.updatedAt", notNullValue()));
     }
 
     @Test
