@@ -37,6 +37,7 @@ This project is part of a 30-day backend development challenge focused on improv
 - Application monitoring with Spring Boot Actuator
 - Environment-specific configuration with Spring Profiles
 - Simulated payments for accepted applications
+- Custom business exceptions for domain-specific errors
   
 
 ## 🛠️ Tech Stack
@@ -585,6 +586,12 @@ mvn test
 - How to run Spring Boot and PostgreSQL with Docker Compose
 - How Docker containers communicate using service names
 - How to persist PostgreSQL data with Docker volumes
+
+### Week 4
+
+- How to replace generic exceptions with custom business exceptions
+- How to centralize domain error handling with `@RestControllerAdvice`
+
 
 ---
 

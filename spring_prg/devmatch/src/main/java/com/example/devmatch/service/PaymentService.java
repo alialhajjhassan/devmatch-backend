@@ -2,6 +2,8 @@ package com.example.devmatch.service;
 
 import com.example.devmatch.dto.CreatePaymentRequest;
 import com.example.devmatch.dto.PaymentResponse;
+import com.example.devmatch.exception.DuplicatePaymentException;
+import com.example.devmatch.exception.InvalidPaymentException;
 import com.example.devmatch.exception.ResourceNotFoundException;
 import com.example.devmatch.exception.UnauthorizedActionException;
 import com.example.devmatch.model.ApplicationStatus;
@@ -51,13 +53,13 @@ public class PaymentService {
         }
 
         if (application.getStatus() != ApplicationStatus.ACCEPTED) {
-            throw new IllegalArgumentException("Only ACCEPTED applications can be paid");
+            throw new InvalidPaymentException("Only ACCEPTED applications can be paid");
         }
 
         boolean alreadyPaid = paymentRepository.existsByApplication(application);
 
         if (alreadyPaid) {
-            throw new IllegalArgumentException("This application has already been paid");
+            throw new DuplicatePaymentException("This application has already been paid");
         }
 
         Payment payment = new Payment();

@@ -3,6 +3,8 @@ package com.example.devmatch.service;
 import com.example.devmatch.dto.ApplicationResponse;
 import com.example.devmatch.dto.CreateApplicationRequest;
 import com.example.devmatch.dto.UpdateApplicationStatusRequest;
+import com.example.devmatch.exception.DuplicateApplicationException;
+import com.example.devmatch.exception.InvalidApplicationStatusException;
 import com.example.devmatch.exception.ResourceNotFoundException;
 import com.example.devmatch.exception.UnauthorizedActionException;
 import com.example.devmatch.model.ApplicationStatus;
@@ -50,7 +52,7 @@ public class JobApplicationService {
         );
 
         if (alreadyApplied) {
-            throw new IllegalArgumentException("You have already applied to this job posting");
+            throw new DuplicateApplicationException("You have already applied to this job posting");
         }
 
         JobApplication application = new JobApplication();
@@ -111,7 +113,7 @@ public class JobApplicationService {
         }
 
         if (request.status() == ApplicationStatus.PENDING) {
-            throw new IllegalArgumentException("Application status can only be updated to ACCEPTED or REJECTED");
+            throw new InvalidApplicationStatusException("Application status can only be updated to ACCEPTED or REJECTED");
         }
 
         application.setStatus(request.status());
