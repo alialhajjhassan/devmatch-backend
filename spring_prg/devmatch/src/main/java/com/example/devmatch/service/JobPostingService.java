@@ -10,8 +10,6 @@ import com.example.devmatch.model.JobStatus;
 import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobPostingRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.example.devmatch.dto.PagedResponse;
 import org.springframework.data.domain.Page;
@@ -27,13 +25,15 @@ import java.util.Optional;
 @Service
 public class JobPostingService {
     private final JobPostingRepository jobPostingRepository;
-    public JobPostingService(JobPostingRepository jobPostingRepository) {
+    private final CurrentUserService currentUserService;
+    public JobPostingService(JobPostingRepository jobPostingRepository, CurrentUserService currentUserService) {
         this.jobPostingRepository = jobPostingRepository;
+        this.currentUserService = currentUserService;
     }
 
     public JobResponse createJob(CreateJobRequest request) {
 
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
 
         if (authenticatedUser.getRole() != Role.CLIENT) {
             throw new UnauthorizedActionException("Only CLIENT users can create job postings");
@@ -129,7 +129,7 @@ public class JobPostingService {
     }
 
     public Optional<JobResponse> updateJob(Long id, UpdateJobRequest request) {
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
         return jobPostingRepository.findById(id)
                 .map(existingJob -> {
                     validateJobOwnership(existingJob, authenticatedUser);
@@ -144,7 +144,7 @@ public class JobPostingService {
     }
 
     public boolean deleteJob(Long id) {
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
         Optional<JobPosting> jobOptional = jobPostingRepository.findById(id);
 
         if (jobOptional.isEmpty()) {
@@ -165,15 +165,6 @@ public class JobPostingService {
         }
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
-            throw new UnauthorizedActionException("User is not authenticated");
-        }
-
-        return user;
-    }
 
     private void validateSortBy(String sortBy) {
         List<String> allowedSortFields = List.of("id", "title", "budget", "status", "createdAt");

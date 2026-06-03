@@ -14,8 +14,6 @@ import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobApplicationRepository;
 import com.example.devmatch.repository.JobPostingRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.example.devmatch.event.ApplicationCreatedEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,18 +24,22 @@ public class JobApplicationService {
     private final JobApplicationRepository jobApplicationRepository;
     private final JobPostingRepository jobPostingRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final CurrentUserService currentUserService;
 
     public JobApplicationService(
             JobApplicationRepository jobApplicationRepository,
-            JobPostingRepository jobPostingRepository, ApplicationEventPublisher eventPublisher
+            JobPostingRepository jobPostingRepository,
+            ApplicationEventPublisher eventPublisher,
+            CurrentUserService currentUserService
     ) {
         this.jobApplicationRepository = jobApplicationRepository;
         this.jobPostingRepository = jobPostingRepository;
         this.eventPublisher = eventPublisher;
+        this.currentUserService = currentUserService;
     }
 
     public ApplicationResponse applyToJob(Long jobId, CreateApplicationRequest request) {
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
 
         if (authenticatedUser.getRole() != Role.FREELANCER) {
             throw new UnauthorizedActionException("Only FREELANCER users can apply to job postings");
@@ -81,21 +83,12 @@ public class JobApplicationService {
         );
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
-            throw new UnauthorizedActionException("User is not authenticated");
-        }
-
-        return user;
-    }
 
     public ApplicationResponse updateApplicationStatus(
             Long applicationId,
             UpdateApplicationStatusRequest request
     ) {
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
 
         JobApplication application = jobApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException(

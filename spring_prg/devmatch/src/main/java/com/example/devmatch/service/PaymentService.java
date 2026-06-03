@@ -15,8 +15,6 @@ import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobApplicationRepository;
 import com.example.devmatch.repository.PaymentRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,17 +22,20 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final JobApplicationRepository jobApplicationRepository;
+    private final CurrentUserService currentUserService;
 
     public PaymentService(
             PaymentRepository paymentRepository,
-            JobApplicationRepository jobApplicationRepository
+            JobApplicationRepository jobApplicationRepository,
+            CurrentUserService currentUserService
     ) {
         this.paymentRepository = paymentRepository;
         this.jobApplicationRepository = jobApplicationRepository;
+        this.currentUserService = currentUserService;
     }
 
     public PaymentResponse createPayment(Long applicationId, CreatePaymentRequest request) {
-        User authenticatedUser = getAuthenticatedUser();
+        User authenticatedUser = currentUserService.getAuthenticatedUser();
 
         if (authenticatedUser.getRole() != Role.CLIENT) {
             throw new UnauthorizedActionException("Only CLIENT users can create payments");
@@ -94,13 +95,4 @@ public class PaymentService {
         );
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
-            throw new UnauthorizedActionException("User is not authenticated");
-        }
-
-        return user;
-    }
 }

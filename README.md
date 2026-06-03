@@ -591,6 +591,8 @@ mvn test
 
 - How to replace generic exceptions with custom business exceptions
 - How to centralize domain error handling with `@RestControllerAdvice`
+- How to centralize authenticated user access with a dedicated service
+- How to reduce duplicated `SecurityContextHolder` logic
 
 
 ---

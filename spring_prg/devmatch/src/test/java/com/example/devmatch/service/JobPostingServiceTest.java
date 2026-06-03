@@ -7,14 +7,12 @@ import com.example.devmatch.model.JobPosting;
 import com.example.devmatch.model.Role;
 import com.example.devmatch.model.User;
 import com.example.devmatch.repository.JobPostingRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 
 import java.math.BigDecimal;
 
@@ -26,14 +24,12 @@ class JobPostingServiceTest {
 
     @Mock
     private JobPostingRepository jobPostingRepository;
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private JobPostingService jobPostingService;
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
 
     @Test
     void createJob_shouldCreateJob_whenAuthenticatedUserIsClient() {
@@ -43,10 +39,7 @@ class JobPostingServiceTest {
         client.setEmail("client@test.com");
         client.setRole(Role.CLIENT);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(client, null, null);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(currentUserService.getAuthenticatedUser()).thenReturn(client);
 
         CreateJobRequest request = new CreateJobRequest(
                 "Build landing page",
@@ -71,6 +64,7 @@ class JobPostingServiceTest {
         assertEquals(1L, response.clientId());
         assertEquals("client_test", response.clientUsername());
 
+        verify(currentUserService).getAuthenticatedUser();
         verify(jobPostingRepository).save(any(JobPosting.class));
     }
 
@@ -83,10 +77,7 @@ class JobPostingServiceTest {
         freelancer.setEmail("freelancer@test.com");
         freelancer.setRole(Role.FREELANCER);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(freelancer, null, null);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(currentUserService.getAuthenticatedUser()).thenReturn(freelancer);
 
         CreateJobRequest request = new CreateJobRequest(
                 "This should fail",
@@ -97,6 +88,7 @@ class JobPostingServiceTest {
 
         assertThrows(UnauthorizedActionException.class, () -> jobPostingService.createJob(request));
 
+        verify(currentUserService).getAuthenticatedUser();
         verify(jobPostingRepository, never()).save(any(JobPosting.class));
     }
 }
