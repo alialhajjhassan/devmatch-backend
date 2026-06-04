@@ -38,6 +38,8 @@ This project is part of a 30-day backend development challenge focused on improv
 - Environment-specific configuration with Spring Profiles
 - Simulated payments for accepted applications
 - Custom business exceptions for domain-specific errors
+- JWT authentication support in Swagger UI
+- Improved OpenAPI documentation
   
 
 ## 🛠️ Tech Stack
@@ -454,7 +456,19 @@ http://localhost:8080/swagger-ui/index.html
 http://localhost:8080/v3/api-docs
 ```
 
+Swagger UI supports JWT authentication.
+
+### How to test protected endpoints:
+1. Register a user
+2. Login through /api/auth/login
+3. Copy the JWT token from the response
+4. Click `Authorize` in Swagger 
+5. Paste the toke
+6. Call protected endpoints
+
+
 ---
+
 
 ## 🧪 Testing
 
@@ -496,7 +510,7 @@ Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
 
 ##### Current test result:
 ```text
-Tests run: 30, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 

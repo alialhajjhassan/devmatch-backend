@@ -12,10 +12,13 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 
 @RestController
 @RequestMapping("/api/jobs")
+@Tag(name = "Job Postings", description = "Endpoints for creating, reading, updating and deleting job postings")
 public class JobPostingController {
 
     private final JobPostingService jobPostingService;
@@ -24,13 +27,14 @@ public class JobPostingController {
         this.jobPostingService = jobPostingService;
     }
 
-
+    @Operation(summary = "Create job posting", description = "Creates a new job posting. Requires CLIENT role.")
     @PostMapping
     public ResponseEntity<JobResponse> createJob(@Valid @RequestBody CreateJobRequest request) {
         JobResponse createdJob = jobPostingService.createJob(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdJob);
     }
 
+    @Operation(summary = "Get job postings", description = "Returns paginated, sorted and filtered job postings")
     @GetMapping
     public ResponseEntity<PagedResponse<JobResponse>> getAllJobs(
             @RequestParam(defaultValue = "0") int page,
@@ -51,6 +55,7 @@ public class JobPostingController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get job by id", description = "Returns a single job posting by id")
     @GetMapping("/{id}")
     public ResponseEntity<JobResponse> getJobById(@PathVariable Long id) {
         return jobPostingService.getJobById(id)
@@ -58,6 +63,7 @@ public class JobPostingController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get job by id", description = "Returns a single job posting by id")
     @PutMapping("/{id}")
     public ResponseEntity<JobResponse> updateJob(
             @PathVariable Long id,
@@ -68,6 +74,8 @@ public class JobPostingController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+
+    @Operation(summary = "Delete job posting", description = "Deletes a job posting. Only the job owner can delete it.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         boolean deleted = jobPostingService.deleteJob(id);

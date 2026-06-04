@@ -7,9 +7,12 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/applications/{applicationId}/payments")
+@Tag(name = "Payments", description = "Endpoints for simulated payments")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -18,6 +21,7 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    @Operation(summary = "Create simulated payment", description = "Creates a simulated payment for an ACCEPTED application")
     @PostMapping
     public ResponseEntity<PaymentResponse> createPayment(
             @PathVariable Long applicationId,
