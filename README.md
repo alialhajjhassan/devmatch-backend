@@ -6,7 +6,59 @@ The goal of this project is to build a realistic backend application step by ste
 
 This project is part of a 30-day backend development challenge focused on improving real-world Java and Spring Boot skills.
 
+
 ---
+
+## 🎯 What This Project Demonstrates
+
+This project demonstrates the ability to build a production-style backend API using Java and Spring Boot.
+
+It covers:
+
+- REST API design
+- Layered architecture
+- Authentication and authorization with JWT
+- Role-based access control
+- Ownership-based authorization
+- Business rules modeling
+- DTO-based API contracts
+- Global exception handling
+- Custom business exceptions
+- PostgreSQL persistence
+- Dockerized environment
+- Spring Profiles for different environments
+- Automated unit and integration testing
+- API documentation with Swagger/OpenAPI
+- Monitoring with Spring Boot Actuator
+
+---
+
+## 🔄 Core Business Flow
+
+1. A user registers as either `CLIENT` or `FREELANCER`
+2. A `CLIENT` creates a job posting
+3. A `FREELANCER` applies to a job posting
+4. The job owner reviews the application
+5. The job owner accepts or rejects the application
+6. If the application is accepted, the job owner can create a simulated payment
+7. The payment is stored with status `COMPLETED`
+
+
+---
+
+## 🗓️ 30-Day Development Roadmap
+
+DevMatch was built incrementally during a 30-day backend development challenge.
+
+| Phase | Focus |
+|---|---|
+| Days 1-7 | Project setup, layered architecture, users, validation, exception handling, job CRUD, DTOs and relationships |
+| Days 8-14 | Spring Security, password hashing, login, JWT authentication, authorization, unit tests, integration tests and Swagger |
+| Days 15-21 | Pagination, filtering, job applications, application status management, Spring Events, Docker, Docker Compose and PostgreSQL |
+| Days 22-30 | Auditing, Actuator, Spring Profiles, simulated payments, custom business exceptions, refactoring, Swagger JWT support, README polish and final launch |
+
+---
+
 
 ## ✅ Current Features
 
@@ -16,8 +68,8 @@ This project is part of a 30-day backend development challenge focused on improv
 - Login with email and password
 - JWT authentication
 - Role-based access control
+- Ownership checks for protected resources
 - Job Posting CRUD
-- Ownership check for job updates and deletion
 - Pagination, sorting and filtering for job postings
 - Validation with Jakarta Bean Validation
 - Global exception handling
@@ -39,7 +91,6 @@ This project is part of a 30-day backend development challenge focused on improv
 - Simulated payments for accepted applications
 - Custom business exceptions for domain-specific errors
 - JWT authentication support in Swagger UI
-- Improved OpenAPI documentation
   
 
 ## 🛠️ Tech Stack
@@ -51,7 +102,7 @@ This project is part of a 30-day backend development challenge focused on improv
   *   **JWT**
   *   **BCrypt**
   *   **Jakarta Bean Validation**
-  *   **H2 Database for tests/local fallback**
+  *   **H2 Database for dev/test**
   *   **Lombok**
   *   **Maven**
   *   **JUnit 5**
@@ -71,21 +122,35 @@ This project is part of a 30-day backend development challenge focused on improv
 
 ## Main Responsibilities
 
-| Layer | Responsibility |
-|---|---|
-| Controller | Handles HTTP requests and responses |
-| Service | Contains business logic |
-| Repository | Handles database access |
-| DTO | Defines API request/response contracts |
-| Model | Represents JPA entities |
-| Exception | Centralized error handling |
-| Security | JWT authentication filter and security configuration |
+| Layer             | Responsibility |
+|-------------------|---|
+| Controller        | Handles HTTP requests and responses |
+| Service           | Contains business logic |
+| Repository        | Handles database access |
+| DTO               | Defines API request/response contracts |
+| Model             | Represents JPA entities |
+| Exception         | Centralized error handling |
+| Security          | JWT authentication filter and security configuration |
+| Event / Listener  |  Publishes and handles application events |
+| Config            | Application, security and OpenAPI configuration |
 
   
 
 ## 🏗️ Architecture
 The project follows the standard layer architecture:
 `Controller` -> `Service` -> `Repository` -> `Database`
+
+Main architectural decisions:
+
+- Controllers expose REST endpoints
+- Services contain business rules
+- Repositories handle persistence
+- DTOs separate API contracts from JPA entities
+- Security is handled through JWT and Spring Security
+- Domain-specific errors are handled with custom exceptions
+- Events are used to decouple notification logic from business logic
+
+---
 
 ## Project Structure
 
@@ -100,7 +165,8 @@ src/main/java/com/example/devmatch
 │   ├── UserController.java
 │   ├── JobPostingController.java
 │   ├── JobApplicationController.java
-│   └── ApplicationController.java
+│   ├── ApplicationController.java
+│   └── PaymentController.java
 │
 ├── dto
 │   ├── AuthResponse.java
@@ -113,7 +179,9 @@ src/main/java/com/example/devmatch
 │   ├── PagedResponse.java
 │   ├── CreateApplicationRequest.java
 │   ├── UpdateApplicationStatusRequest.java
-│   └── ApplicationResponse.java
+│   ├── ApplicationResponse.java
+│   ├── CreatePaymentRequest.java
+│   └── PaymentResponse.java
 │
 ├── event
 │   └── ApplicationCreatedEvent.java
@@ -123,23 +191,34 @@ src/main/java/com/example/devmatch
 │   ├── GlobalExceptionHandler.java
 │   ├── ResourceNotFoundException.java
 │   ├── InvalidCredentialsException.java
-│   └── UnauthorizedActionException.java
+│   ├── UnauthorizedActionException.java
+│   ├── DuplicateApplicationException.java
+│   ├── InvalidApplicationStatusException.java
+│   ├── DuplicatePaymentException.java
+│   └── InvalidPaymentException.java
 │
+├── listener
+│   └── ApplicationNotificationListener.java
+│ 
 ├── model
+│   ├── audit
+│   │   └── Auditable.java
+│   │
 │   ├── User.java
 │   ├── Role.java
 │   ├── JobPosting.java
 │   ├── JobStatus.java
 │   ├── JobApplication.java
-│   └── ApplicationStatus.java
+│   ├── ApplicationStatus.java
+│   ├── Payment.java
+│   └── PaymentStatus.java
 │
-├── listener
-│   └── ApplicationNotificationListener.java
 │
 ├── repository
 │   ├── UserRepository.java
 │   ├── JobPostingRepository.java
-│   └── JobApplicationRepository.java
+│   ├── JobApplicationRepository.java
+│   └── PaymentRepository.java
 │
 ├── security
 │   └── JwtAuthenticationFilter.java
@@ -147,9 +226,11 @@ src/main/java/com/example/devmatch
 └── service
     ├── AuthService.java
     ├── JwtService.java
+    ├── CurrentUserService.java
     ├── UserService.java
     ├── JobPostingService.java
-    └── JobApplicationService.java
+    ├── JobApplicationService.java
+    └── PaymentService.java
 
 ```
 
@@ -160,7 +241,10 @@ src/test/java/com/example/devmatch
 ├── integration
 │   ├── UserAuthIntegrationTest.java
 │   ├── JobPostingIntegrationTest.java
-│   └── JobApplicationIntegrationTest.java
+│   ├── JobApplicationIntegrationTest.java
+│   ├── PaymentIntegrationTest.java
+│   ├── ActuatorIntegrationTest.java
+│   └── OpenApiIntegrationTest.java
 │
 └── service
     ├── UserServiceTest.java
@@ -173,9 +257,9 @@ src/test/java/com/example/devmatch
 
 ## 🔐 Authentication & Authorization
 
-### DevMatch uses JWT-based authentication.
+ DevMatch uses JWT-based authentication.
 
-#### Authentication flow:
+### Authentication flow:
 
 ```
 1. User registers with email and password
@@ -189,7 +273,7 @@ src/test/java/com/example/devmatch
 
 ```
 
-#### Authorization header example:
+### Authorization header example:
 
 ```
 Authorization: Bearer <token>
@@ -217,7 +301,7 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| POST | `/api/jobs` | Create a new job posting | Authenticated CLIENT |
+| POST | `/api/jobs` | Create a new job posting | Authenticated `CLIENT` |
 | GET | `/api/jobs?page=0&size=10&sortBy=createdAt&direction=desc` | Get paginated job postings |  Public |
 | GET | `/api/jobs/{id}` | Get job posting by id | Public |
 | PUT | `/api/jobs/{id}` | Update job posting | Job owner only |
@@ -227,8 +311,22 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| POST | `/api/jobs/{jobId}/applications` | Apply to a job posting | Authenticated FREELANCER |
-| PATCH | `/api/applications/{applicationId}/status` | Accept or reject an application | Job owner CLIENT only |
+| POST | `/api/jobs/{jobId}/applications` | Apply to a job posting | Authenticated `FREELANCER` |
+| PATCH | `/api/applications/{applicationId}/status` | Accept or reject an application | Job owner `CLIENT` only |
+
+### Payments
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| POST | `/api/applications/{applicationId}/payments` | Create a simulated payment for an accepted application | Job owner `CLIENT` only |
+
+### Monitoring
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/actuator/health` | Application health status | Public |
+| GET | `/actuator/info` | Application info | Public |
+| GET | `/actuator/metrics` | Application metrics | Protected |
 
 
 ---
@@ -259,12 +357,12 @@ Authorization: Bearer <token>
 
 The password is never returned in the API response.
 
+---
 
 ### Login
 
 #### Request:
 
-##### Body:
 ```json
 {
   "email": "client1@example.com",
@@ -273,6 +371,7 @@ The password is never returned in the API response.
 ```
 
 #### Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzUxMiJ9...",
@@ -283,15 +382,19 @@ The password is never returned in the API response.
 }
 ```
 
+---
+
 ### Create Job Posting
-#### Requires JWT token from a CLIENT user.
+
+ Requires JWT token from a CLIENT user.
 
 #### Request:
+
 ``` text
 POST /api/jobs
 Authorization: Bearer <token>
 ```
-##### Body:
+#### Body:
 ```json
 {
   "title": "Build a landing page",
@@ -309,12 +412,129 @@ Authorization: Bearer <token>
   "budget": 500,
   "status": "OPEN",
   "createdAt": "2026-05-19T09:26:30.298222",
+  "updatedAt": "2026-05-19T09:26:30.298222",
   "clientId": 1,
   "clientUsername": "client_1"
 }
 ```
 
-#### Validation Error Response
+---
+
+### Apply to a Job Posting
+
+Requires JWT token from a `FREELANCER` user.
+
+#### Request
+
+```text
+POST /api/jobs/{jobId}/applications
+Authorization: Bearer <token>
+```
+
+#### Body
+
+```json
+{
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs."
+}
+```
+
+#### Response
+
+```json
+{
+  "id": 1,
+  "jobId": 1,
+  "jobTitle": "Build a React landing page",
+  "freelancerId": 2,
+  "freelancerUsername": "freelancer_app",
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
+  "status": "PENDING",
+  "createdAt": "2026-05-23T02:31:09.2767268",
+  "updatedAt": "2026-05-23T02:31:09.2767268"
+}
+```
+
+---
+
+### Update Application Status
+
+Requires JWT token from the `CLIENT` owner of the job posting.
+
+#### Request
+
+```text
+PATCH /api/applications/{applicationId}/status
+Authorization: Bearer <token>
+```
+
+#### Body
+
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+
+#### Response
+
+```json
+{
+  "id": 1,
+  "jobId": 1,
+  "jobTitle": "Build a React landing page",
+  "freelancerId": 2,
+  "freelancerUsername": "freelancer_app",
+  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
+  "status": "ACCEPTED",
+  "createdAt": "2026-05-23T02:31:09.2767268",
+  "updatedAt": "2026-05-23T03:10:15.123456"
+}
+```
+
+---
+
+### Create Simulated Payment
+
+Requires JWT token from the `CLIENT` owner of the job posting.
+
+#### Request
+
+```text
+POST /api/applications/{applicationId}/payments
+Authorization: Bearer <token>
+```
+
+#### Body
+
+```json
+{
+  "amount": 800
+}
+```
+
+#### Response
+
+```json
+{
+  "id": 1,
+  "applicationId": 1,
+  "jobId": 1,
+  "jobTitle": "Develop an admin dashboard",
+  "clientId": 1,
+  "clientUsername": "client_owner",
+  "freelancerId": 3,
+  "freelancerUsername": "freelancer_app",
+  "amount": 800,
+  "status": "COMPLETED",
+  "createdAt": "2026-06-01T23:32:30.659556",
+  "updatedAt": "2026-06-01T23:32:30.659556"
+}
+```
+
+---
+
+### Validation Error Response
 ```json
 {
   "timestamp": "2026-05-12T18:10:31.3407402",
@@ -328,7 +548,9 @@ Authorization: Bearer <token>
 }
 ```
 
-#### Invalid Login Response
+---
+
+### Invalid Login Response
 ```json
 {
   "timestamp": "2026-05-19T09:10:00.123456",
@@ -337,6 +559,8 @@ Authorization: Bearer <token>
   "errors": null
 }
 ```
+
+---
 
 #### Unauthorized Action Response
 ```json
@@ -348,68 +572,8 @@ Authorization: Bearer <token>
 }
 ```
 
-### Apply to a Job Posting
-
-Requires JWT token from a `FREELANCER` user.
-
-#### Request:
-``` text
-POST /api/jobs/{jobId}/applications
-Authorization: Bearer <token>
-```
-##### Body:
-```json
-{
-  "coverLetter": "Hi, I have experience building landing pages and REST APIs."
-}
-```
-
-#### Response:
-```json
-{
-  "id": 1,
-  "jobId": 1,
-  "jobTitle": "Build a React landing page",
-  "freelancerId": 2,
-  "freelancerUsername": "freelancer_app",
-  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
-  "status": "PENDING",
-  "createdAt": "2026-05-23T02:31:09.2767268"
-}
-```
-
-### Update Application Status
-
-Requires JWT token from the `CLIENT` owner of the job posting.
-
-#### Request:
-``` text
-PATCH /api/applications/{applicationId}/status
-Authorization: Bearer <token>
-```
-##### Body:
-```json
-{
-  "status": "ACCEPTED"
-}
-```
-
-#### Response:
-```json
-{
-  "id": 1,
-  "jobId": 1,
-  "jobTitle": "Build a React landing page",
-  "freelancerId": 2,
-  "freelancerUsername": "freelancer_app",
-  "coverLetter": "Hi, I have experience building landing pages and REST APIs.",
-  "status": "ACCEPTED",
-  "createdAt": "2026-05-23T02:31:09.2767268"
-}
-```
-
-    
 ---
+
 
 ## ⚙️ Spring Profiles
 
@@ -434,7 +598,7 @@ dev
 SPRING_PROFILES_ACTIVE: docker
 ```
 
-#### Integration tests use:
+Integration tests use:
 
 ```text
 @ActiveProfiles("test")
@@ -448,7 +612,7 @@ SPRING_PROFILES_ACTIVE: docker
 
 ### Swagger UI is available at:
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8080/swagger-ui.html
 ```
 
 ### OpenAPI JSON is available at:
@@ -463,22 +627,124 @@ Swagger UI supports JWT authentication.
 2. Login through /api/auth/login
 3. Copy the JWT token from the response
 4. Click `Authorize` in Swagger 
-5. Paste the toke
+5. Paste the token
 6. Call protected endpoints
 
 
 ---
 
+## ▶️ Running ooy
+
+Run the application with the default `dev` profile:
+
+```bash
+mvn spring-boot:run
+```
+
+The `dev` profile uses an in-memory H2 database.
+
+Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+H2 Console:
+
+```text
+http://localhost:8080/h2-console
+```
+
+---
+
+## 🐳 Running with Docker Compose
+
+Run the full stack with PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+Run in detached mode:
+
+```bash
+docker compose up --build -d
+```
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Stop containers and remove PostgreSQL data volume:
+
+```bash
+docker compose down -v
+```
+
+View application logs:
+
+```bash
+docker compose logs -f app
+```
+
+Application:
+
+```text
+http://localhost:8080
+```
+
+Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+---
+
+## 📊 Monitoring with Actuator
+
+Health endpoint:
+
+```text
+http://localhost:8080/actuator/health
+```
+
+Info endpoint:
+
+```text
+http://localhost:8080/actuator/info
+```
+
+Exposed endpoints:
+
+- `health`
+- `info`
+- `metrics`
+
+Public endpoints:
+
+- `/actuator/health`
+- `/actuator/info`
+
+Protected endpoints:
+
+- `/actuator/metrics`
+
+---
+
+
 
 ## 🧪 Testing
 
-#### The project includes both unit tests and integration tests.
+The project includes both unit tests and integration tests.
 
 ### Unit Tests
 
 Unit tests focus on isolated service logic using JUnit and Mockito.
 
-##### Covered examples:
+Covered examples:
 
 * User registration hashes the password
 * Login returns JWT when credentials are valid
@@ -491,7 +757,7 @@ Unit tests focus on isolated service logic using JUnit and Mockito.
 
 Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
 
-##### Covered examples:
+Covered examples:
 
 * Register user via HTTP
 * Validate bad request responses
@@ -506,9 +772,16 @@ Integration tests use `@SpringBootTest`, `@AutoConfigureMockMvc` and `MockMvc`.
 * Job owners can accept or reject applications
 * Freelancers cannot update application status
 * Non-owner clients cannot update application status
+* Simulated payments can be created for accepted applications 
+* Duplicate payments are blocked 
+* Pending applications cannot be paid 
+* Swagger/OpenAPI security scheme is exposed 
+* Actuator health and info endpoints are public
 
 
-##### Current test result:
+
+Current test result:
+
 ```text
 Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
@@ -529,7 +802,7 @@ mvn test
   *   Public endpoints can be accessed without authentication
   *   Protected endpoints require a valid JWT
   *   Only users with role `CLIENT` can create job postings
-  *   FREELANCER users cannot create job postings
+  *   `FREELANCER` users cannot create job postings
   *   A job posting is automatically linked to the authenticated client
   *   The client does not send `clientId` when creating a job
   *   Only the owner of a job posting can update it
@@ -603,98 +876,30 @@ mvn test
 
 ### Week 4
 
+- How to add auditing with `createdAt` and `updatedAt`
+- How to expose health and info endpoints with Spring Boot Actuator
+- How to separate environment configuration with Spring Profiles
+- How to model simulated payments as a domain resource
 - How to replace generic exceptions with custom business exceptions
 - How to centralize domain error handling with `@RestControllerAdvice`
 - How to centralize authenticated user access with a dedicated service
 - How to reduce duplicated `SecurityContextHolder` logic
+- How to add JWT authentication support in Swagger UI
 
 
 ---
 
 
-## 🚧 Next Steps
+## 🚧 Future Improvements
 
-  *   Spring profiles: `dev`, `test`, `prod`
-  *   Spring Boot Actuator monitoring
-  *   Centralized configuration for JWT secret and expiration
-  *   Improve error responses for invalid JWT tokens
-  *   Add ObjectMapper-based helpers in integration tests
-  *   Add unit tests for event publishing
-  *   Add application status notification events
-  *   Final production-style README and demo
-
----
-
-
-## 🐳 Docker Compose
-
-Run the full stack with PostgreSQL:
-
-```bash
-docker compose up --build
-```
-
-### Run in detached mode:
-
-```bash
-docker compose up --build -d
-```
-
-### Stop containers:
-
-```bash
-docker compose down
-```
-
-### Stop containers and remove PostgreSQL data volume:
-
-```bash
-docker compose down -v
-```
-
-### View application logs:
-
-```bash
-docker compose logs -f app
-```
-
-
----
-
-## 📊 Monitoring with Actuator
-
-### Health endpoint:
-```text
-http://localhost:8080/actuator/health
-```
-
-### Health endpoint:
-```text
-http://localhost:8080/actuator/info
-```
-
-### Exposed endpoints:
-*   health
-*   info
-*   metrics
-
-### Public endpoints:
-* ``` /actuator/health```
-* ``` /actuator/info```
-
-
-### Protected endpoints:
-* ``` /actuator/metrics```
-
-
----
-
-
-### Swagger UI:
-
-```text
-http://localhost:8080/swagger-ui/index.html
-```
+- Move JWT secret and expiration to environment variables
+- Improve invalid JWT error responses
+- Add refresh token support
+- Add ObjectMapper-based helpers in integration tests
+- Add unit tests for event publishing
+- Add application status notification events
+- Add CI pipeline with GitHub Actions
+- Add deployment configuration
 
 ---
 
