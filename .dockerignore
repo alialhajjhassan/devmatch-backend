@@ -1,4 +1,4 @@
-target/
+spring_prg/devmatch/target/
 .git/
 .idea/
 *.iml
