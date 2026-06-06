@@ -633,7 +633,7 @@ Swagger UI supports JWT authentication.
 
 ---
 
-## ▶️ Running ooy
+## ▶️ Running Locally
 
 Run the application with the default `dev` profile:
 
