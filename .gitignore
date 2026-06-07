@@ -1,4 +1,11 @@
 spring_prg/devmatch/HELP.md
+
+### Environment variables ###
+.env
+.env.local
+.env.*.local
+
+### Maven ###
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

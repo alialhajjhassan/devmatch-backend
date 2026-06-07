@@ -30,6 +30,7 @@ It covers:
 - Automated unit and integration testing
 - API documentation with Swagger/OpenAPI
 - Monitoring with Spring Boot Actuator
+- Externalized configuration with environment variables
 
 ---
 
@@ -91,6 +92,7 @@ DevMatch was built incrementally during a 30-day backend development challenge.
 - Simulated payments for accepted applications
 - Custom business exceptions for domain-specific errors
 - JWT authentication support in Swagger UI
+- Externalized configuration with environment variables
   
 
 ## 🛠️ Tech Stack
@@ -331,7 +333,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🧪 API Examples: 
+## 🧪 API Examples
 
 ### Register User
 
@@ -562,7 +564,7 @@ Authorization: Bearer <token>
 
 ---
 
-#### Unauthorized Action Response
+### Unauthorized Action Response
 ```json
 {
   "timestamp": "2026-05-19T09:16:06.150169",
@@ -629,6 +631,33 @@ Swagger UI supports JWT authentication.
 4. Click `Authorize` in Swagger 
 5. Paste the token
 6. Call protected endpoints
+
+
+---
+
+## 🔐 Environment Variables
+
+The project uses environment variables for Docker Compose and sensitive configuration such as database credentials and JWT settings.
+
+Create a `.env` file from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+```
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+SPRING_PROFILES_ACTIVE
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+JWT_SECRET
+JWT_EXPIRATION
+```
+The `.env` file is ignored by Git and should not be committed.
 
 
 ---
@@ -787,7 +816,7 @@ Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-##### Run tests:
+#### Run tests:
 ```bash
 mvn test
 ```
@@ -892,7 +921,6 @@ mvn test
 
 ## 🚧 Future Improvements
 
-- Move JWT secret and expiration to environment variables
 - Improve invalid JWT error responses
 - Add refresh token support
 - Add ObjectMapper-based helpers in integration tests
